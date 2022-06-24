@@ -28,66 +28,88 @@ const getData = require('./getData');
         console.log(`Error: ${error}`);
     }
 
-    //class="me-MediaButtonLoader me-MediaButtonLoader_ML1 "
-    //class="me-MediaButtonLoader me-MediaButtonLoader_MLVideo "
+    let data = [];
 
     // scrapper
-    for (let i=0; i<1000; i++) {
-        let fatherSelector = `.ovm-OverviewView_Classification > div.ovm-CompetitionList > div:nth-child(${i+2})`;
-        let fatherDivExists = await page.$eval(fatherSelector, () => true).catch(() => false);
+    setInterval(async () => {
+        for (let i = 0; i < 1000; i++) {
+            let fatherSelector = `.ovm-OverviewView_Classification > div.ovm-CompetitionList > div:nth-child(${i + 2})`;
+            let fatherDivExists = await page.$eval(fatherSelector, () => true).catch(() => false);
 
-        let competitionSelector = `.ovm-CompetitionList > div:nth-child(${i+2}) > div.ovm-CompetitionHeader.ovm-CompetitionHeader-media > div > div.ovm-CompetitionHeader_Name.ovm-CompetitionHeader_Name-faves`
-        let competitionDivExist = await page.$eval(competitionSelector, () => true).catch(() => false);
+            let competitionSelector = `.ovm-CompetitionList > div:nth-child(${i + 2}) > div.ovm-CompetitionHeader.ovm-CompetitionHeader-media > div > div.ovm-CompetitionHeader_Name.ovm-CompetitionHeader_Name-faves`
+            let competitionDivExist = await page.$eval(competitionSelector, () => true).catch(() => false);
 
-        if (!fatherDivExists || !competitionDivExist) {
-            break;
-        }
-
-        let competitionName = await page.$eval(competitionSelector, result => result.innerText);
-
-        if (competitionName.indexOf('E-soccer') != -1) {
-            break;
-        }
-
-        for (let j = 0; j<1000; j++) {
-            let childSelector = `${fatherSelector}  div.ovm-FixtureList.ovm-Competition_Fixtures > div:nth-child(${j+2}) > div.ovm-MediaIconContainer > div > div`;
-            let childDivExists = await page.$eval(childSelector, () => true).catch(() => false);
-
-            if (!childDivExists) {
+            if (!fatherDivExists || !competitionDivExist) {
                 break;
             }
-            
-            await page.waitForSelector(childSelector);
-            await page.click(childSelector);
-            
-            await page.waitForTimeout(250);
 
-            let iconVideoSelector = '[class="lv-ButtonBar_MatchLiveIcon me-MediaButtonLoader me-MediaButtonLoader_ML1 "]';
-            let iconVideoExists = await page.$eval(iconVideoSelector, () => true).catch(() => false);
+            let competitionName = await page.$eval(competitionSelector, result => result.innerText);
 
-            if(iconVideoExists) {
-                await page.click(iconVideoSelector);
+            if (competitionName.indexOf('E-soccer') != -1) {
+                break;
             }
 
-            
-            let timerSelector = ".ml1-MatchLiveSoccerModule_Constrainer.ml1-MatchLiveSwipeContainer_Child.ml1-MatchLiveSwipeContainer_X_ViewIndex-0.ml1-MatchLiveSwipeContainer_Y_ViewIndex-0 > div > div > div.ml1-SoccerClock > div > div > div > span.ml1-SoccerClock_Clock";
-            await page.waitForSelector(timerSelector);
-            let timer = await page.$eval(timerSelector, result => result.innerText);
+            for (let j = 0; j < 1000; j++) {
+                let childSelector = `${fatherSelector}  div.ovm-FixtureList.ovm-Competition_Fixtures > div:nth-child(${j + 2}) > div.ovm-MediaIconContainer > div > div`;
+                let childDivExists = await page.$eval(childSelector, () => true).catch(() => false);
 
-            let teams = await page.$$eval('[class="lsb-ScoreBasedScoreboard_TeamName "]', result => result.map(team => team.innerText));
+                if (!childDivExists) {
+                    break;
+                }
 
-            let score = await page.$$eval('[class="lsb-ScoreBasedScoreboard_TeamScore "]', result => result.map(team => team.innerText));
+                let idSelector = `.ovm-OverviewView_Classification > div.ovm-CompetitionList > div:nth-child(${i + 2}) > div.ovm-FixtureList.ovm-Competition_Fixtures > div:nth-child(${j + 2})`;
 
-            console.log(competitionName)
-            console.log(`Timer: ${timer}`);
-            console.log(`${teams[0]} x ${teams[1]}`);
-            console.log(`${score[0]} x ${score[1]}`);
-            console.log('\n \n');
+                let idOfMatch = await page.$$eval(idSelector, result => result[0].wrapper.stem.data.C2);
+
+                let linkOfMatch = `https://www.bet365.com/#/IP/EV15${idOfMatch}2C1`;
+
+                await page.waitForSelector(childSelector);
+                await page.click(childSelector);
+
+                await page.waitForTimeout(250);
+
+                let iconVideoSelector = '[class="lv-ButtonBar_MatchLiveIcon me-MediaButtonLoader me-MediaButtonLoader_ML1 "]';
+                let iconVideoExists = await page.$eval(iconVideoSelector, () => true).catch(() => false);
+
+                if (iconVideoExists) {
+                    await page.click(iconVideoSelector);
+                }
+
+
+                let timerSelector = ".ml1-MatchLiveSoccerModule_Constrainer.ml1-MatchLiveSwipeContainer_Child.ml1-MatchLiveSwipeContainer_X_ViewIndex-0.ml1-MatchLiveSwipeContainer_Y_ViewIndex-0 > div > div > div.ml1-SoccerClock > div > div > div > span.ml1-SoccerClock_Clock";
+                await page.waitForSelector(timerSelector);
+                let timer = await page.$eval(timerSelector, result => result.innerText);
+
+                let teams = await page.$$eval('[class="lsb-ScoreBasedScoreboard_TeamName "]', result => result.map(team => team.innerText).map(x => x.trim()));
+
+                let score = await page.$$eval('[class="lsb-ScoreBasedScoreboard_TeamScore "]', result => result.map(team => team.innerText).map(x => x.trim()));
+
+                let attacksAndPossession = await page.$$eval('[class="ml-WheelChart_Container "]', result => result.map(info => info.innerText).map(x => x.trim()));
+
+                let cardsAndCorners = await page.$$eval('[class="ml1-StatsColumn_MiniValue "]', result => result.map(info => info.innerText).map(x => x.trim()));
+
+                let kicks = await page.$$eval('[class^="ml-ProgressBar_MiniBarValue ml-ProgressBar_MiniBarValue"]', result => result.map(kick => kick.innerText).map(x => x.trim()));
+
+                data.push({
+                    competitionName,
+                    timer,
+                    teams,
+                    score,
+                    attacksAndPossession,
+                    cardsAndCorners,
+                    kicks,
+                    linkOfMatch
+                });
+            }
 
         }
 
-    }
+        getData(data);
 
-    console.log("End...")
+        while (data.length) {
+            data.pop();
+        }
+
+    }, 1000 * 10);
 
 })();
