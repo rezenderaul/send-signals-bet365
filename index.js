@@ -1,5 +1,9 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const getData = require('./getData');
+const { removeFromAlreadySent } = require('./utils/controlSignalSend');
+
+puppeteer.use(StealthPlugin());
 
 (async () => {
 
@@ -7,7 +11,6 @@ const getData = require('./getData');
         headless: false,
         defaultViewport: null,
         args: ["--start-maximized"],
-        //devtools: true
     });
 
     const page = await browser.newPage();
@@ -25,13 +28,16 @@ const getData = require('./getData');
             await page.waitForSelector(".ccm-CookieConsentPopup_Accept")
         ).click();
     } catch (error) {
-        console.log(`Error: ${error}`);
+        console.log(error);
     }
 
-    let data = [];
+    let addToAlreadySent = [];
+    let signalToBeSent = [];
 
     // scrapper
     setInterval(async () => {
+        removeFromAlreadySent(addToAlreadySent);
+
         for (let i = 0; i < 1000; i++) {
             let fatherSelector = `.ovm-OverviewView_Classification > div.ovm-CompetitionList > div:nth-child(${i + 2})`;
             let fatherDivExists = await page.$eval(fatherSelector, () => true).catch(() => false);
@@ -59,26 +65,39 @@ const getData = require('./getData');
 
                 let idSelector = `.ovm-OverviewView_Classification > div.ovm-CompetitionList > div:nth-child(${i + 2}) > div.ovm-FixtureList.ovm-Competition_Fixtures > div:nth-child(${j + 2})`;
 
-                let idOfMatch = await page.$$eval(idSelector, result => result[0].wrapper.stem.data.C2);
+                let idOfMatch = await page.$$eval(idSelector, result => result[0].wrapper.stem.data.C2).catch(() => false);
 
                 let linkOfMatch = `https://www.bet365.com/#/IP/EV15${idOfMatch}2C1`;
 
                 await page.waitForSelector(childSelector);
-                await page.click(childSelector);
 
-                await page.waitForTimeout(250);
+                try {
+                    await page.click(childSelector).catch(() => false);
+                } catch (error) {
+                    continue;
+                }
+
 
                 let iconVideoSelector = '[class="lv-ButtonBar_MatchLiveIcon me-MediaButtonLoader me-MediaButtonLoader_ML1 "]';
                 let iconVideoExists = await page.$eval(iconVideoSelector, () => true).catch(() => false);
 
                 if (iconVideoExists) {
-                    await page.click(iconVideoSelector);
+                    try {
+                        await page.click(iconVideoSelector).catch(() => false);
+                    } catch (error) {
+                        continue
+                    }
                 }
 
+                await page.waitForTimeout(300);
 
                 let timerSelector = ".ml1-MatchLiveSoccerModule_Constrainer.ml1-MatchLiveSwipeContainer_Child.ml1-MatchLiveSwipeContainer_X_ViewIndex-0.ml1-MatchLiveSwipeContainer_Y_ViewIndex-0 > div > div > div.ml1-SoccerClock > div > div > div > span.ml1-SoccerClock_Clock";
-                await page.waitForSelector(timerSelector);
-                let timer = await page.$eval(timerSelector, result => result.innerText);
+
+                let timer = await page.$eval(timerSelector, result => result.innerText).catch(() => false);
+
+                if (!timer) {
+                    continue;
+                }
 
                 let teams = await page.$$eval('[class="lsb-ScoreBasedScoreboard_TeamName "]', result => result.map(team => team.innerText).map(x => x.trim()));
 
@@ -90,7 +109,15 @@ const getData = require('./getData');
 
                 let kicks = await page.$$eval('[class^="ml-ProgressBar_MiniBarValue ml-ProgressBar_MiniBarValue"]', result => result.map(kick => kick.innerText).map(x => x.trim()));
 
-                data.push({
+                await Promise.all(timer,
+                    teams,
+                    score,
+                    attacksAndPossession,
+                    cardsAndCorners,
+                    kicks,
+                    linkOfMatch);
+
+                signalToBeSent.push({
                     competitionName,
                     timer,
                     teams,
@@ -101,15 +128,17 @@ const getData = require('./getData');
                     linkOfMatch
                 });
             }
-
         }
 
-        getData(data);
+        getData(signalToBeSent, addToAlreadySent);
 
-        while (data.length) {
-            data.pop();
+        console.log(`Total de jogos sendo analizados: ${signalToBeSent.length}`);
+        console.log(`Quantidades de jogos na memória do servidor: ${addToAlreadySent.length}`);
+
+        while (signalToBeSent.length) {
+            signalToBeSent.pop();
         }
 
-    }, 1000 * 10);
+    }, 1000 * 60);
 
 })();
