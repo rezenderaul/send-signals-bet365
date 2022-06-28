@@ -8,13 +8,30 @@ puppeteer.use(StealthPlugin());
 (async () => {
 
     const browser = await puppeteer.launch({
-        headless: false,
-        defaultViewport: null,
-        args: ["--start-maximized"],
+        headless: true,
+        args: [
+            "--start-maximized", 
+            "--window-size=1920,1080",
+            "--disable-gpu",
+            "--disable-extensions",
+            "--proxy-server='direct://'",
+            "--proxy-bypass-list=*",
+            "--headless",
+            "no-sandbox"
+        ],
     });
 
     const page = await browser.newPage();
+    
+    /*await page.setUserAgent(
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36'
+    );*/
+
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36');
+
     await page.goto('https://www.bet365.com/#/IP/B1');
+
+    console.log('Executing...');
 
     page.setDefaultTimeout(0);
 
@@ -33,6 +50,8 @@ puppeteer.use(StealthPlugin());
 
     let addToAlreadySent = [];
     let signalToBeSent = [];
+
+    console.log('Initializing the loops...');
 
     // scrapper
     setInterval(async () => {
@@ -109,7 +128,8 @@ puppeteer.use(StealthPlugin());
 
                 let kicks = await page.$$eval('[class^="ml-ProgressBar_MiniBarValue ml-ProgressBar_MiniBarValue"]', result => result.map(kick => kick.innerText).map(x => x.trim()));
 
-                await Promise.all(timer,
+                await Promise.all(
+                    timer,
                     teams,
                     score,
                     attacksAndPossession,
