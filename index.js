@@ -17,7 +17,8 @@ puppeteer.use(StealthPlugin());
             "--proxy-server='direct://'",
             "--proxy-bypass-list=*",
             "--headless",
-            "no-sandbox"
+            "--no-sandbox",
+            "--disable-setuid-sandbox"
         ],
     });
 
@@ -48,12 +49,14 @@ puppeteer.use(StealthPlugin());
 
     let addToAlreadySent = [];
     let signalToBeSent = [];
+    let countMatches = 0;
 
     console.log('Initializing the loops...');
 
     // scrapper
     setInterval(async () => {
         removeFromAlreadySent(addToAlreadySent);
+        countMatches = 0;
 
         for (let i = 0; i < 1000; i++) {
             let fatherSelector = `.ovm-OverviewView_Classification > div.ovm-CompetitionList > div:nth-child(${i + 2})`;
@@ -112,6 +115,8 @@ puppeteer.use(StealthPlugin());
 
                 let timer = await page.$eval(timerSelector, result => result.innerText).catch(() => false);
 
+                countMatches++;
+
                 if (!timer) {
                     continue;
                 }
@@ -150,7 +155,7 @@ puppeteer.use(StealthPlugin());
 
         getData(signalToBeSent, addToAlreadySent);
 
-        console.log(`Total de jogos sendo analizados: ${signalToBeSent.length}`);
+        console.log(`Total de jogos sendo analizados: ${countMatches}`);
         console.log(`Quantidades de jogos na memória do servidor: ${addToAlreadySent.length}`);
 
         while (signalToBeSent.length) {
