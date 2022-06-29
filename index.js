@@ -9,6 +9,7 @@ puppeteer.use(StealthPlugin());
     const browser = await puppeteer.launch({
         headless: true,
         args: [
+            "--use-gl=egl",
             "--start-maximized", 
             "--window-size=1920,1080",
             "--disable-gpu",
@@ -48,13 +49,19 @@ puppeteer.use(StealthPlugin());
 
     let addToAlreadySent = [];
     let signalToBeSent = [];
-    let countMatches = 0;
 
     console.log('Initializing the loops...');
 
     // scrapper
     setInterval(async () => {
-        countMatches = 0;
+
+        let countMatches = await page.$$eval(
+            '[class="ovm-Fixture ovm-Fixture-horizontal ovm-Fixture-media "]', result => result
+                .map(x => x.innerText)
+                .filter(x => x.indexOf(') Esports') == -1)    
+        );
+
+        console.log(`Jogos em análise: ${countMatches.length}`);
 
         for (let i = 0; i < 1000; i++) {
             let fatherSelector = `.ovm-OverviewView_Classification > div.ovm-CompetitionList > div:nth-child(${i + 2})`;
@@ -113,8 +120,6 @@ puppeteer.use(StealthPlugin());
 
                 let timer = await page.$eval(timerSelector, result => result.innerText).catch(() => false);
 
-                countMatches++;
-
                 if (!timer) {
                     continue;
                 }
@@ -152,9 +157,6 @@ puppeteer.use(StealthPlugin());
         }
 
         getData(signalToBeSent, addToAlreadySent);
-
-        console.log(`Total de jogos sendo analizados: ${countMatches}`);
-        console.log(`Quantidades de jogos na memória do servidor: ${addToAlreadySent.length}`);
 
         while (signalToBeSent.length) {
             signalToBeSent.pop();
