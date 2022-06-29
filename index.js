@@ -50,6 +50,10 @@ puppeteer.use(StealthPlugin());
     let addToAlreadySent = [];
     let signalToBeSent = [];
 
+    setInterval(async () => {
+        await page.reload();
+    }, 1000 * 60 * 25)    
+
     console.log('Initializing the loops...');
 
     // scrapper

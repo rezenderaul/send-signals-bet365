@@ -11,7 +11,7 @@ function getData(matchesArr, alreadySent) {
 
     matchesArr
         .filter(match => betweenMinutes(match.timer, 30, 37))
-        .filter(match => appm(match.timer, match.attacksAndPossession) >= 0.95)
+        .filter(match => appm(match.timer, match.attacksAndPossession) >= 1.3)
         .filter(match => cornersAll(match.cardsAndCorners) >= 3)
         .filter(match => homeLosing(match.score) || draw(match.score))
         .filter(match => addToAlreadySent(match.linkOfMatch, alreadySent, 10))
@@ -19,7 +19,7 @@ function getData(matchesArr, alreadySent) {
 
     matchesArr
         .filter(match => betweenMinutes(match.timer, 82, 85))
-        .filter(match => appm(match.timer, match.attacksAndPossession) >= 0.95)
+        .filter(match => appm(match.timer, match.attacksAndPossession) >= 1.3)
         .filter(match => addToAlreadySent(match.linkOfMatch, alreadySent, 10))
         .map(match => data.push(setObj(match)));
 
