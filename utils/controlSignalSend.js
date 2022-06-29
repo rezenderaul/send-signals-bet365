@@ -1,10 +1,10 @@
-function addToAlreadySent(id, signalAlreadySent) {
+function addToAlreadySent(id, signalAlreadySent, minutesToRemove = 10) {
     let idExists = signalAlreadySent.filter(x => x.id.indexOf(id) != -1);
     if(!idExists.length) {
         signalAlreadySent.push({
             id: id,
-            timer: new Date().getTime() + 1000 * 60 * 10
         });
+        removeFromAlreadySent(signalAlreadySent, id, minutesToRemove);
         return true;
     }
     
@@ -12,16 +12,12 @@ function addToAlreadySent(id, signalAlreadySent) {
 }
 
 // Return Arr to remove from  signalAlreadySent
-function removeFromAlreadySent(signalAlreadySent) {
-    let timeToRemove = new Date().getTime();
-    signalAlreadySent.forEach(x => console.log(timeToRemove >= x.time));
-    signalAlreadySent
-        .filter(x => timeToRemove >= x.timer)
-        .map(x => console.log(`Dados a remover: ${x.id} => ${x.timer}`))
-        .map(x => signalAlreadySent.splice(signalAlreadySent.indexOf(x)));
+function removeFromAlreadySent(signalAlreadySent, link, minutesToRemove) {
+    setTimeout(() => {
+        console.log(`Remove: ${link}`);
+        signalAlreadySent
+        .map(x => signalAlreadySent.splice(x.id.indexOf(link)));
+    }, 1000 * 60 * minutesToRemove);
 }
 
-module.exports = {
-    addToAlreadySent,
-    removeFromAlreadySent
-}
+module.exports = addToAlreadySent;

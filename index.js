@@ -1,7 +1,6 @@
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const getData = require('./getData');
-const { removeFromAlreadySent } = require('./utils/controlSignalSend');
 
 puppeteer.use(StealthPlugin());
 
@@ -55,7 +54,6 @@ puppeteer.use(StealthPlugin());
 
     // scrapper
     setInterval(async () => {
-        removeFromAlreadySent(addToAlreadySent);
         countMatches = 0;
 
         for (let i = 0; i < 1000; i++) {
