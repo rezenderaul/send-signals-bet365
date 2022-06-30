@@ -7,18 +7,15 @@ puppeteer.use(StealthPlugin());
 (async () => {
 
     const browser = await puppeteer.launch({
-        headless: true,
         args: [
-            "--use-gl=egl",
-            "--start-maximized", 
-            "--window-size=1920,1080",
-            "--disable-gpu",
-            "--disable-extensions",
-            "--proxy-server='direct://'",
-            "--proxy-bypass-list=*",
-            "--no-sandbox",
-            "--disable-setuid-sandbox"
+            '--no-sandbox', 
+            '--disable-setuid-sandbox', 
+            '--window-size=1920,1080', 
+            '--start-maximized'
         ],
+        executablePath: '/usr/bin/chromium-browser',
+        //executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome',
+        headless: false
     });
 
     const page = await browser.newPage();
@@ -61,7 +58,7 @@ puppeteer.use(StealthPlugin());
                 .filter(x => x.indexOf(') Esports') == -1)    
         );
 
-        console.log(`Jogos em análise: ${countMatches.length}`);
+        console.log(`Jogos ao vivo em análise: ${countMatches.length}`);
 
         for (let i = 0; i < 1000; i++) {
             let fatherSelector = `.ovm-OverviewView_Classification > div.ovm-CompetitionList > div:nth-child(${i + 2})`;
