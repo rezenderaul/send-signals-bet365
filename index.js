@@ -16,7 +16,6 @@ puppeteer.use(StealthPlugin());
             "--disable-extensions",
             "--proxy-server='direct://'",
             "--proxy-bypass-list=*",
-            "--headless",
             "--no-sandbox",
             "--disable-setuid-sandbox"
         ],
@@ -49,10 +48,7 @@ puppeteer.use(StealthPlugin());
 
     let addToAlreadySent = [];
     let signalToBeSent = [];
-
-    setInterval(async () => {
-        await page.reload();
-    }, 1000 * 60 * 25)    
+    let loopingCount = 0;
 
     console.log('Initializing the loops...');
 
@@ -164,6 +160,14 @@ puppeteer.use(StealthPlugin());
 
         while (signalToBeSent.length) {
             signalToBeSent.pop();
+        }
+
+        loopingCount++;
+
+        if (loopingCount >= 20) {
+            loopingCount = 0;
+            console.log('Reloading page...');
+            await page.reload();
         }
 
     }, 1000 * 60);
